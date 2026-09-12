@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="160" viewBox="0 0 144 32" role="img" aria-labelledby="title">
+  <title id="title">SignalOS</title>
+  <rect width="32" height="32" rx="9" fill="#1A4E8A"/>
+  <path d="M7.5 21.5 L13 15.5 L17 19 L24.5 10.5" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.75"/>
+  <text x="42" y="22" font-family="-apple-system, SF Pro Text, Helvetica, Arial, sans-serif" font-size="18" font-weight="600" letter-spacing="-0.2" fill="#15181C">SignalOS</text>
+</svg>

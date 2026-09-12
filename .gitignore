@@ -1,0 +1,59 @@
+# Node / JS
+node_modules/
+npm-debug.*
+yarn-error.*
+.pnp.*
+
+# Expo / React Native
+.expo/
+dist/
+web-build/
+*.tsbuildinfo
+.expo-shared/
+
+# Native
+ios/
+android/
+*.orig.*
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Python (backend, later)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# OS / editor
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# Private local material and credentials
+*.pem
+*.key
+*.p12
+*.p8
+*.jks
+*.mobileprovision
+*.sqlite*
+*.db
+*.dump
+*.bak
+*.log
+.firecrawl/
+.claude/
+.codex/
+.agents/
+outputs/
+tasks/
+plans/
+animation-plans/

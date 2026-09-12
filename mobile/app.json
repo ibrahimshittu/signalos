@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "SignalOS",
+    "slug": "signalos",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/signalos-icon.png",
+    "scheme": "signalos",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.signalos.app",
+      "icon": "./assets/images/signalos-icon.png"
+    },
+    "android": {
+      "package": "com.signalos.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#1A4E8A",
+        "foregroundImage": "./assets/images/signalos-adaptive-foreground.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/signalos-icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F4F5F7",
+          "image": "./assets/images/signalos-launch-lockup.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "android": {
+            "image": "./assets/images/signalos-splash.png",
+            "imageWidth": 96
+          }
+        }
+      ],
+      "expo-secure-store",
+      "expo-notifications"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
