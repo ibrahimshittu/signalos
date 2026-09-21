@@ -155,6 +155,18 @@ export interface PortfolioSummary {
   captured_at: string;
 }
 
+export interface PortfolioRiskState {
+  connection_id: string;
+  status: 'normal' | 'warning' | 'breached' | 'stale';
+  high_water_equity: string;
+  current_equity: string;
+  drawdown_pct: string;
+  limit_pct: string;
+  new_risk_allowed: boolean;
+  observed_at: string;
+  evaluated_at: string;
+}
+
 export interface BrokerPosition {
   id: string;
   connection_id: string;
@@ -435,6 +447,7 @@ export interface InvestmentStudioApi {
   syncBrokerConnection(connectionId: string): Promise<BrokerConnection>;
   switchBrokerContext(connectionId: string, environment: BrokerEnvironment): Promise<BrokerContext>;
   getPortfolioSummary(): Promise<PortfolioSummary | null>;
+  getPortfolioRisk(): Promise<PortfolioRiskState | null>;
   listOpenPositions(connectionId?: string): Promise<BrokerPosition[]>;
   getPosition(positionId: string): Promise<BrokerPosition>;
   createExecutionReview(

@@ -162,6 +162,28 @@ describe('HttpSignalOSApi', () => {
     );
   });
 
+  it('loads the active portfolio drawdown protection state', async () => {
+    const risk = {
+      connection_id: 'connection-1',
+      status: 'warning',
+      drawdown_pct: '0.06',
+      limit_pct: '0.08',
+      new_risk_allowed: true,
+    };
+    const fetchImpl = jest.fn<typeof fetch>(async () => response(risk));
+    const api = new HttpSignalOSApi({
+      baseUrl: 'https://api.signalos.test',
+      fetchImpl,
+      getHeaders: () => ({ Authorization: 'Bearer signed-access-token' }),
+    });
+
+    await expect(api.getPortfolioRisk()).resolves.toEqual(risk);
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://api.signalos.test/v1/portfolio-risk',
+      expect.any(Object),
+    );
+  });
+
   it('runs a manual market scan for the active environment', async () => {
     const scan = {
       id: 'scan-1',

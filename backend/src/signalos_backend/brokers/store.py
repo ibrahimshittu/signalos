@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    func,
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -20,6 +21,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from signalos_backend.brokers.domain import (
     AccountBalance,
+    AccountEquityRange,
     AccountSnapshot,
     ActiveBrokerAccount,
     BrokerConnection,
@@ -402,6 +404,48 @@ class BrokerStore:
                 invested_value=invested_value,
                 balances=tuple(AccountBalance.model_validate(item) for item in snapshot.balances),
                 captured_at=captured_at,
+            )
+
+    async def get_account_equity_range(self, *, user_id: str) -> AccountEquityRange | None:
+        """Return current and peak equity for the active account only."""
+
+        async with self.sessions() as session:
+            base = (
+                select(BrokerConnectionRecord.id)
+                .join(
+                    BrokerContextRecord,
+                    BrokerContextRecord.connection_id == BrokerConnectionRecord.id,
+                )
+                .where(
+                    BrokerContextRecord.user_id == user_id,
+                    BrokerConnectionRecord.user_id == user_id,
+                    BrokerConnectionRecord.status == ConnectionStatus.HEALTHY.value,
+                )
+            )
+            connection_id = await session.scalar(base.limit(1))
+            if connection_id is None:
+                return None
+            latest = await session.scalar(
+                select(AccountSnapshotRecord)
+                .where(AccountSnapshotRecord.connection_id == connection_id)
+                .order_by(AccountSnapshotRecord.captured_at.desc())
+                .limit(1)
+            )
+            if latest is None:
+                return None
+            high_water = await session.scalar(
+                select(func.max(AccountSnapshotRecord.total_equity)).where(
+                    AccountSnapshotRecord.connection_id == connection_id
+                )
+            )
+            observed_at = latest.captured_at
+            if observed_at.tzinfo is None:
+                observed_at = observed_at.replace(tzinfo=UTC)
+            return AccountEquityRange(
+                connection_id=UUID(connection_id),
+                high_water_equity=high_water or Decimal("0"),
+                current_equity=latest.total_equity,
+                observed_at=observed_at,
             )
 
     async def _update_connection(

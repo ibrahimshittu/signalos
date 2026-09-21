@@ -159,6 +159,19 @@ export class HttpSignalOSApi implements InvestmentStudioApi {
     }
   }
 
+  async getPortfolioRisk() {
+    try {
+      return await this.client.request<import('@/domain/studio').PortfolioRiskState>(
+        '/v1/portfolio-risk',
+      );
+    } catch (error) {
+      if (error instanceof SignalOSApiError && (error.status === 404 || error.status === 409)) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
   listOpenPositions(connectionId?: string) {
     return this.client.request<import('@/domain/studio').BrokerPosition[]>(
       `/v1/positions?open_only=true${connectionId ? `&connection_id=${encodeURIComponent(connectionId)}` : ''}`,

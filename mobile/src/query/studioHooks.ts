@@ -16,6 +16,7 @@ export const studioKeys = {
   providers: () => [...studioKeys.all, 'providers'] as const,
   connection: (id?: string) => [...studioKeys.all, 'connection', id] as const,
   portfolio: () => [...studioKeys.all, 'portfolio'] as const,
+  portfolioRisk: () => [...studioKeys.all, 'portfolio-risk'] as const,
   positions: () => [...studioKeys.all, 'positions'] as const,
   market: (environment: BrokerEnvironment) => [...studioKeys.all, 'market', environment] as const,
   marketReview: (environment: BrokerEnvironment) =>
@@ -69,6 +70,7 @@ export function useSaveInvestmentProfile() {
         client.invalidateQueries({ queryKey: studioKeys.profile() }),
         client.invalidateQueries({ queryKey: studioKeys.onboarding() }),
         client.invalidateQueries({ queryKey: studioKeys.portfolio() }),
+        client.invalidateQueries({ queryKey: studioKeys.portfolioRisk() }),
       ]);
     },
   });
@@ -140,6 +142,7 @@ export function useSyncBrokerConnection() {
       await Promise.all([
         client.invalidateQueries({ queryKey: studioKeys.onboarding() }),
         client.invalidateQueries({ queryKey: studioKeys.portfolio() }),
+        client.invalidateQueries({ queryKey: studioKeys.portfolioRisk() }),
         client.invalidateQueries({ queryKey: studioKeys.positions() }),
         client.invalidateQueries({ queryKey: studioKeys.proposals() }),
       ]);
@@ -226,6 +229,20 @@ export function usePortfolioSummary() {
       }
       return summary;
     },
+  });
+}
+
+export function usePortfolioRisk() {
+  const owner = useAppStore((state) => state.ownerUserId);
+  const connectionId = useAppStore((state) => state.brokerConnection?.id);
+  return useQuery({
+    queryKey: [...studioKeys.portfolioRisk(), owner, connectionId],
+    enabled: Boolean(owner && connectionId),
+    queryFn: async () => {
+      const state = await getStudioApi().getPortfolioRisk();
+      return state?.connection_id === connectionId ? state : null;
+    },
+    refetchInterval: 30_000,
   });
 }
 

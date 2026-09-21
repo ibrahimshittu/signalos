@@ -9,7 +9,12 @@ from uuid import uuid4
 import pytest
 from sqlalchemy import func, select
 
-from signalos_backend.brokers.domain import ActiveBrokerAccount, BrokerEnvironment
+from signalos_backend.brokers.domain import (
+    AccountBalance,
+    AccountSnapshot,
+    ActiveBrokerAccount,
+    BrokerEnvironment,
+)
 from signalos_backend.brokers.store import BrokerConnectionRecord
 from signalos_backend.db import IntelligenceStore, build_engine
 from signalos_backend.execution.domain import (
@@ -97,8 +102,25 @@ async def test_reconciliation_reads_broker_truth_and_persists_each_stream() -> N
         sequence=42,
         updated_at=now,
     )
+    account_snapshot = AccountSnapshot(
+        account_type="UNIFIED",
+        total_equity=Decimal("10000"),
+        available_balance=Decimal("7000"),
+        balances=(
+            AccountBalance(
+                coin="USDT",
+                wallet_balance=Decimal("7000"),
+                equity=Decimal("10000"),
+                available_to_withdraw=Decimal("7000"),
+            ),
+        ),
+        captured_at=now,
+    )
 
     class Brokers:
+        def __init__(self) -> None:
+            self.saved_snapshot = None
+
         async def list_active_accounts(self, *, environment):
             assert environment is BrokerEnvironment.MAINNET
             return (account,)
@@ -106,6 +128,9 @@ async def test_reconciliation_reads_broker_truth_and_persists_each_stream() -> N
         async def get_credential_ciphertexts(self, **kwargs):
             assert kwargs["connection_id"] == connection_id
             return encrypted_key, encrypted_secret
+
+        async def save_snapshot(self, **kwargs):
+            self.saved_snapshot = kwargs
 
     class Executions:
         def __init__(self) -> None:
@@ -130,6 +155,10 @@ async def test_reconciliation_reads_broker_truth_and_persists_each_stream() -> N
             self.saved_positions = kwargs
 
     class Gateway:
+        async def get_account_snapshot(self, **kwargs):
+            assert kwargs["api_key"] == "write-key"
+            return account_snapshot
+
         async def get_order_snapshot(self, **kwargs):
             assert kwargs["api_key"] == "write-key"
             return order_snapshot
@@ -140,9 +169,10 @@ async def test_reconciliation_reads_broker_truth_and_persists_each_stream() -> N
         async def get_positions(self, **kwargs):
             return (position,)
 
+    brokers = Brokers()
     executions = Executions()
     summary = await ReconciliationService(
-        brokers=Brokers(),
+        brokers=brokers,
         executions=executions,
         cipher=cipher,
         gateway=Gateway(),
@@ -153,6 +183,7 @@ async def test_reconciliation_reads_broker_truth_and_persists_each_stream() -> N
     assert summary.orders_reconciled == 1
     assert summary.executions_seen == 1
     assert summary.open_positions == 1
+    assert brokers.saved_snapshot["snapshot"] == account_snapshot
     assert executions.saved_order["state"] is BrokerOrderState.PARTIALLY_FILLED
     assert executions.saved_executions["snapshots"] == (execution,)
     assert executions.saved_positions["snapshots"] == (position,)

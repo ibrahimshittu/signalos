@@ -1,12 +1,13 @@
 import { StyleSheet, View } from 'react-native';
 import { Card, CardRow, Glyph, Text } from '@/components/ui';
 import { mandateReason, postureLabels } from '@/domain/mandate';
-import type { AdaptiveRiskMandate } from '@/domain/studio';
+import type { AdaptiveRiskMandate, PortfolioRiskState } from '@/domain/studio';
 import { formatRatioPct } from '@/lib/format';
 import { tokens } from '@/theme/tokens';
 
 interface Props {
   mandate: AdaptiveRiskMandate;
+  risk?: PortfolioRiskState | null;
   /** Hidden on Account, where the framing has already been established. */
   showExplanation?: boolean;
 }
@@ -19,7 +20,14 @@ interface Props {
  * sets a stop distance, position size, or leverage — this exists so those
  * decisions are inspectable, not so they can be configured.
  */
-export function MandateSummary({ mandate, showExplanation = true }: Props) {
+export function MandateSummary({ mandate, risk, showExplanation = true }: Props) {
+  const drawdownDetail = risk
+    ? risk.status === 'breached'
+      ? 'Limit reached; new proposals and order submissions are paused'
+      : risk.status === 'stale'
+        ? 'Account data is stale; new risk stays paused until synchronization'
+        : `Current drawdown ${formatRatioPct(risk.drawdown_pct)} · automatic protection active`
+    : 'Automatically pauses new proposals and order submissions at this limit';
   return (
     <View style={styles.block}>
       <View>
@@ -45,8 +53,8 @@ export function MandateSummary({ mandate, showExplanation = true }: Props) {
           value={formatRatioPct(mandate.max_loss_per_trade_pct)}
         />
         <CardRow
-          detail="Reference limit; automatic drawdown protection is not active yet"
-          label="Drawdown reference"
+          detail={drawdownDetail}
+          label="Drawdown protection"
           value={formatRatioPct(mandate.max_portfolio_drawdown_pct)}
         />
         <CardRow label="Leverage ceiling" value={`${mandate.max_leverage}×`} />

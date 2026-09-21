@@ -9,6 +9,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from signalos_backend.brokers.domain import (
+    AccountSnapshot,
     ActiveBrokerAccount,
     BrokerCredentialPurpose,
     BrokerEnvironment,
@@ -50,6 +51,10 @@ class ReconciliationBrokerStore(Protocol):
         purpose: BrokerCredentialPurpose,
     ) -> tuple[str, str] | None: ...
 
+    async def save_snapshot(
+        self, *, user_id: str, connection_id: UUID, snapshot: AccountSnapshot
+    ): ...
+
 
 class ReconciliationStore(Protocol):
     async def list_reconcilable_orders(self, *, connection_id: UUID) -> tuple[BrokerOrder, ...]: ...
@@ -86,6 +91,8 @@ class ReconciliationStore(Protocol):
 
 
 class ReconciliationGateway(Protocol):
+    async def get_account_snapshot(self, **kwargs) -> AccountSnapshot: ...
+
     async def get_order_snapshot(self, **kwargs) -> BrokerOrderSnapshot | None: ...
 
     async def get_executions(self, **kwargs) -> tuple[BrokerExecutionSnapshot, ...]: ...
@@ -168,6 +175,17 @@ class ReconciliationService:
         api_key = self.cipher.decrypt(encrypted[0])
         api_secret = self.cipher.decrypt(encrypted[1])
         now = self.clock().astimezone(UTC)
+
+        account_snapshot = await self.gateway.get_account_snapshot(
+            api_key=api_key,
+            api_secret=api_secret,
+            environment=account.environment,
+        )
+        await self.brokers.save_snapshot(
+            user_id=account.user_id,
+            connection_id=account.connection_id,
+            snapshot=account_snapshot,
+        )
 
         orders = await self.executions.list_reconcilable_orders(connection_id=account.connection_id)
         order_count = 0

@@ -242,6 +242,14 @@ def test_profile_then_bybit_sync_unlocks_studio(tmp_path):
         }
         assert client.get("/v1/portfolio-summary", headers=OTHER_USER_HEADERS).status_code == 404
 
+        risk = client.get("/v1/portfolio-risk", headers=USER_HEADERS)
+        assert risk.status_code == 200
+        assert risk.json()["connection_id"] == connection["id"]
+        assert risk.json()["status"] == "normal"
+        assert risk.json()["drawdown_pct"] == "0"
+        assert risk.json()["limit_pct"] == "0.08"
+        assert risk.json()["new_risk_allowed"] is True
+
         completed = client.get("/v1/me/onboarding-state", headers=USER_HEADERS).json()
         assert completed["studio_unlocked"] is True
         assert completed["missing_requirements"] == []

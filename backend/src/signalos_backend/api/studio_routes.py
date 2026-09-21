@@ -122,6 +122,17 @@ async def portfolio_summary(
     return summary
 
 
+@router.get("/portfolio-risk")
+async def portfolio_risk(
+    principal: Annotated[Principal, Depends(require_principal)],
+    studio: Annotated[StudioServices, Depends(get_studio)],
+):
+    try:
+        return await studio.risk.state(user_id=principal.user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
 @router.post("/broker-context/switch")
 async def switch_broker_context(
     payload: BrokerContextSwitch,

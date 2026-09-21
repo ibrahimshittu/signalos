@@ -41,6 +41,11 @@ from signalos_backend.execution.domain import (
 from signalos_backend.execution.portfolio import position_portfolio_fingerprint
 from signalos_backend.execution.reconciliation import map_order_state
 from signalos_backend.execution.store import ExecutionStore
+from signalos_backend.portfolio.risk import (
+    DrawdownLimitBreached,
+    NewRiskGate,
+    PortfolioRiskService,
+)
 from signalos_backend.proposals.domain import OrderSide, OrderType, ProposalStatus, TradeProposal
 from signalos_backend.proposals.store import ProposalStore
 from signalos_backend.security.credentials import CredentialCipher
@@ -104,6 +109,7 @@ class ExecutionService:
         executions: ExecutionStore,
         cipher: CredentialCipher,
         gateway: BrokerExecutionGateway,
+        risk: NewRiskGate | None = None,
         clock: Callable[[], datetime] = utc_now,
         review_ttl: timedelta = timedelta(minutes=2),
     ) -> None:
@@ -115,6 +121,7 @@ class ExecutionService:
         self.cipher = cipher
         self.gateway = gateway
         self.clock = clock
+        self.risk = risk or PortfolioRiskService(users=users, brokers=brokers, clock=clock)
         self.review_ttl = review_ttl
 
     async def review(self, *, user_id: str, proposal_id: UUID) -> OrderReview:
@@ -225,6 +232,10 @@ class ExecutionService:
         profile = await self.users.get_profile(user_id)
         if profile is None or not profile.disclosures_accepted:
             raise ExecutionConflictError("current mandate requires an accepted investment profile")
+        try:
+            await self.risk.require_new_risk_allowed(user_id=user_id)
+        except DrawdownLimitBreached as exc:
+            raise ExecutionConflictError(str(exc)) from exc
         mandate = profile.adaptive_mandate
         if proposal.leverage > mandate.max_leverage or (
             proposal.category.value == "linear" and not mandate.derivatives_eligible

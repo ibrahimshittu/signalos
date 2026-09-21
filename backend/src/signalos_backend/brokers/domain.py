@@ -138,6 +138,17 @@ class PortfolioSummary(AccountSnapshot):
     invested_value: Decimal
 
 
+class AccountEquityRange(BaseModel):
+    """Current and peak equity for the user's active broker account."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    connection_id: UUID
+    high_water_equity: Decimal = Field(ge=0)
+    current_equity: Decimal = Field(ge=0)
+    observed_at: datetime
+
+
 class BrokerPolicyError(ValueError):
     """A credential or connection violates deterministic broker policy."""
 

@@ -13,6 +13,7 @@ from signalos_backend.brokers.domain import ConnectionStatus
 from signalos_backend.brokers.store import BrokerStore
 from signalos_backend.domain import utc_now
 from signalos_backend.investment.personalization import FeedbackObservation, PreferenceLearner
+from signalos_backend.portfolio.risk import NewRiskGate, PortfolioRiskService
 from signalos_backend.proposals.domain import (
     CreateTradeProposal,
     ProposalFeedback,
@@ -39,6 +40,7 @@ class ProposalService:
         proposals: ProposalStore,
         memories: UserMemoryStore | None = None,
         notifications: ProposalNotifier | None = None,
+        risk: NewRiskGate | None = None,
         clock: Callable[[], datetime] = utc_now,
     ) -> None:
         self.users = users
@@ -47,6 +49,7 @@ class ProposalService:
         self.memories = memories
         self.notifications = notifications
         self.clock = clock
+        self.risk = risk or PortfolioRiskService(users=users, brokers=brokers, clock=clock)
 
     async def create(self, *, user_id: str, payload: CreateTradeProposal) -> TradeProposal:
         if not payload.gate_report.passed:
@@ -54,6 +57,7 @@ class ProposalService:
         profile = await self.users.get_profile(user_id)
         if profile is None or not profile.disclosures_accepted:
             raise ValueError("investment profile and disclosures are required")
+        await self.risk.require_new_risk_allowed(user_id=user_id)
         connection = await self.brokers.get_connection(
             user_id=user_id, connection_id=payload.connection_id
         )

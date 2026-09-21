@@ -24,6 +24,7 @@ from signalos_backend.notifications.gateway import ExpoPushGateway
 from signalos_backend.notifications.service import NotificationService
 from signalos_backend.notifications.store import NotificationStore
 from signalos_backend.observability import configure_observability
+from signalos_backend.portfolio.risk import PortfolioRiskService
 from signalos_backend.proposals.service import ProposalService
 from signalos_backend.proposals.store import ProposalStore
 from signalos_backend.providers.bybit.client import BybitHttpGateway
@@ -91,6 +92,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     access_token_verifier = (
         None if settings.environment == "test" else SupabaseAccessTokenVerifier(settings)
     )
+    risk_service = PortfolioRiskService(users=user_store, brokers=broker_store)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -162,6 +164,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             proposals=proposal_store,
             memories=memory_store,
             notifications=notification_service,
+            risk=risk_service,
         ),
         executions=ExecutionService(
             proposals=proposal_store,
@@ -171,8 +174,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             executions=execution_store,
             cipher=credential_cipher,
             gateway=live_bybit,
+            risk=risk_service,
         ),
         notifications=notification_service,
+        risk=risk_service,
     )
     app.state.service = IntelligenceService(
         settings=settings,

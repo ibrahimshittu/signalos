@@ -18,7 +18,12 @@ import {
   Text,
 } from '@/components/ui';
 import { connectionHealth, environmentName, providerName } from '@/domain/connection';
-import { useDisconnectBroker, useMemory, useResetLearnedPreferences } from '@/query/studioHooks';
+import {
+  useDisconnectBroker,
+  useMemory,
+  usePortfolioRisk,
+  useResetLearnedPreferences,
+} from '@/query/studioHooks';
 import { useAuth } from '@/services/auth/AuthProvider';
 import { useAppStore } from '@/store/useAppStore';
 import { formatRatioPct, formatRelativeIso } from '@/lib/format';
@@ -33,6 +38,7 @@ export default function AccountScreen() {
   const { signOut } = useAuth();
 
   const memory = useMemory();
+  const portfolioRisk = usePortfolioRisk();
   const resetPreferences = useResetLearnedPreferences();
   const disconnect = useDisconnectBroker();
 
@@ -181,7 +187,11 @@ export default function AccountScreen() {
       >
         {showLimits && profile ? (
           <View style={styles.card}>
-            <MandateSummary mandate={profile.adaptive_mandate} showExplanation={false} />
+            <MandateSummary
+              mandate={profile.adaptive_mandate}
+              risk={portfolioRisk.data}
+              showExplanation={false}
+            />
           </View>
         ) : null}
       </Section>
