@@ -82,6 +82,10 @@ Verify the API at `http://localhost:8001/v1/health` and its development document
   are validated before they reach the API or mobile app.
 - Executable v1 proposals use bounded limit prices. Market-order review is rejected until an exact
   maximum-slippage term can be included in the immutable proposal hash.
+- Strategy admission requires a version-bound OHLC execution replay through the production signal
+  and sizing policies. The replay uses next-bar limit fills, tick and quantity steps, conservative
+  stop handling, fees, spread, slippage, funding, strategy position limits, and reserve floors.
+  Price-only experiments can report research metrics but cannot pass admission.
 - Push notifications contain only a proposal ID and navigation type. They never contain API keys or
   trigger an order.
 - CI uses fakes and recorded responses and never writes to Bybit mainnet.

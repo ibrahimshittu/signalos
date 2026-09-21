@@ -64,6 +64,22 @@ def test_correlated_exposure_can_only_reduce_the_risk_budget() -> None:
     assert "correlation_budget_reduction" in correlated.constraints
 
 
+def test_strategy_position_and_reserve_limits_cap_notional() -> None:
+    sizing = OpportunitySizingPolicy().size(
+        sizing_input(
+            stop_loss=Decimal("99"),
+            take_profit=Decimal("103"),
+            current_gross_exposure=Decimal("7000"),
+            strategy_max_position_pct=Decimal("0.05"),
+            reserve_floor_pct=Decimal("0.25"),
+        )
+    )
+
+    assert sizing.notional <= Decimal("500")
+    assert "strategy_position_cap" in sizing.constraints
+    assert "reserve_floor_cap" in sizing.constraints
+
+
 def test_spot_opportunity_is_always_unleveraged() -> None:
     sizing = OpportunitySizingPolicy().size(
         sizing_input(

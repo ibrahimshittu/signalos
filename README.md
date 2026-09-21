@@ -238,8 +238,8 @@ explicitly chosen Testnet account with fresh MFA and reviewed terms.
 This is an integrated development application, not a claim of production readiness.
 
 - Executable proposals require an evidence-approved, promoted strategy. An empty registry is a
-  setup block, not evidence of AI rejection. Price-only evaluation does not validate execution
-  replay; do not bypass promotion gates.
+  setup block, not evidence of AI rejection. Price-only evaluation remains research-only; strategy
+  admission requires a reproducible OHLC execution replay plus shadow evidence and operator review.
 - CPI observations and release dates are connected directly to official BLS sources. Live news and
   ETF-flow data still require licensed providers; delayed filings and scraped headlines are not
   presented as live feeds.

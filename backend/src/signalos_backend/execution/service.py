@@ -250,6 +250,7 @@ class ExecutionService:
         if (
             evaluation is None
             or not evaluation.passed_gates
+            or not evaluation.execution_replay_validated
             or f"evaluation:{evaluation.reproducibility_hash}" not in strategy.evidence_references
         ):
             raise ExecutionConflictError("strategy evidence is unavailable; request a new review")

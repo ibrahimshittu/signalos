@@ -408,6 +408,7 @@ async def test_live_scan_creates_one_personalized_proposal_without_mock_data(tmp
             turnover=Decimal("3"),
             cost_paid=Decimal("0.01"),
             sensitivity_stable=True,
+            execution_replay_validated=True,
             reproducibility_hash="a" * 64,
             passed_gates=True,
             failures=(),

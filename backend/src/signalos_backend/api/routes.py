@@ -288,8 +288,15 @@ async def transition_strategy(
         StrategyStatus.APPROVED,
     }:
         evaluation = await service.store.latest_evaluation(strategy_id, version)
-        if evaluation is None or not evaluation.passed_gates:
-            raise HTTPException(status_code=409, detail="passing version-bound evaluation required")
+        if (
+            evaluation is None
+            or not evaluation.passed_gates
+            or not evaluation.execution_replay_validated
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="passing version-bound execution replay required",
+            )
         if f"evaluation:{evaluation.reproducibility_hash}" not in current.evidence_references:
             raise HTTPException(
                 status_code=409, detail="strategy must reference its exact evaluation"

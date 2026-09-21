@@ -38,8 +38,11 @@ class DeterministicSignalEngine:
         strategy: StrategySpec,
         candles: tuple[Candle, ...],
         ticker: TickerSnapshot,
+        window_shift: int = 0,
     ) -> StrategySignal | None:
-        if strategy.family is not StrategyFamily.MOMENTUM_TREND or len(candles) < 50:
+        slow_window = max(3, strategy.features[0].window + window_shift)
+        fast_window = min(max(2, 20 + window_shift), slow_window - 1)
+        if strategy.family is not StrategyFamily.MOMENTUM_TREND or len(candles) < slow_window:
             return None
         if any(
             candle.symbol != ticker.symbol
@@ -50,8 +53,8 @@ class DeterministicSignalEngine:
             raise ValueError("signal candles must be closed and match the ticker")
 
         closes = tuple(candle.close_price for candle in candles)
-        fast = sum(closes[-20:]) / Decimal("20")
-        slow = sum(closes[-50:]) / Decimal("50")
+        fast = sum(closes[-fast_window:]) / Decimal(fast_window)
+        slow = sum(closes[-slow_window:]) / Decimal(slow_window)
         trend_strength = abs(fast - slow) / ticker.last_price
         if trend_strength < Decimal("0.002"):
             return None
