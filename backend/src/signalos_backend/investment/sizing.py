@@ -24,6 +24,8 @@ class OpportunitySizingInput(BaseModel):
     available_balance: Decimal = Field(ge=0)
     current_gross_exposure: Decimal = Field(default=Decimal("0"), ge=0)
     correlated_exposure_pct: Decimal = Field(default=Decimal("0"), ge=0, le=1)
+    strategy_max_position_pct: Decimal = Field(default=Decimal("1"), gt=0, le=1)
+    reserve_floor_pct: Decimal = Field(default=Decimal("0"), ge=0, le=1)
     max_loss_per_trade_pct: Decimal = Field(gt=0, le=Decimal("0.02"))
     mandate_max_leverage: Decimal = Field(ge=1, le=PLATFORM_MAX_LEVERAGE)
     broker_max_leverage: Decimal = Field(ge=1, le=Decimal("200"))
@@ -110,8 +112,31 @@ class OpportunitySizingPolicy:
             * (Decimal("1") - exposure_ratio)
         )
         quantity_by_margin = margin_budget * leverage / input_.entry_price
+        quantity_by_strategy = (
+            input_.account_equity * input_.strategy_max_position_pct / input_.entry_price
+        )
+        if quantity_by_strategy <= min(quantity_by_risk, quantity_by_margin):
+            constraints.append("strategy_position_cap")
+        reserve_capacity = max(
+            input_.account_equity * (Decimal("1") - input_.reserve_floor_pct)
+            - input_.current_gross_exposure,
+            Decimal("0"),
+        )
+        quantity_by_reserve = reserve_capacity / input_.entry_price
+        if quantity_by_reserve <= min(
+            quantity_by_risk,
+            quantity_by_margin,
+            quantity_by_strategy,
+        ):
+            constraints.append("reserve_floor_cap")
         quantity = self._floor_to_step(
-            min(quantity_by_risk, quantity_by_margin), input_.quantity_step
+            min(
+                quantity_by_risk,
+                quantity_by_margin,
+                quantity_by_strategy,
+                quantity_by_reserve,
+            ),
+            input_.quantity_step,
         )
         if quantity <= 0:
             raise SizingRejected("available risk and margin budgets cannot fund an order")

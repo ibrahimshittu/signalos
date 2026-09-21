@@ -93,7 +93,7 @@ def test_strategy_admission_requires_evaluation_before_validation(tmp_path):
         assert client.post(path, params={"target": "research"}, headers=headers).status_code == 200
         blocked = client.post(path, params={"target": "validated"}, headers=headers)
         assert blocked.status_code == 409
-        assert blocked.json()["detail"] == "passing version-bound evaluation required"
+        assert blocked.json()["detail"] == "passing version-bound execution replay required"
 
 
 def test_persisted_evidence_survives_restart_and_run_is_idempotent(tmp_path):

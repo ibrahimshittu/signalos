@@ -247,6 +247,7 @@ class InvestmentPipeline:
             if (
                 evaluation is None
                 or not evaluation.passed_gates
+                or not evaluation.execution_replay_validated
                 or f"evaluation:{evaluation.reproducibility_hash}"
                 not in strategy.evidence_references
             ):
@@ -634,6 +635,10 @@ class InvestmentPipeline:
                         available_balance=portfolio.available_balance,
                         current_gross_exposure=gross_exposure,
                         correlated_exposure_pct=correlation,
+                        strategy_max_position_pct=(
+                            strategy.risk_constraints.max_position_pct
+                        ),
+                        reserve_floor_pct=strategy.risk_constraints.reserve_floor_pct,
                         max_loss_per_trade_pct=(profile.adaptive_mandate.max_loss_per_trade_pct),
                         mandate_max_leverage=profile.adaptive_mandate.max_leverage,
                         broker_max_leverage=broker_max_leverage,

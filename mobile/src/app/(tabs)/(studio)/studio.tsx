@@ -23,10 +23,12 @@ import {
 import { connectionHealth } from '@/domain/connection';
 import { proposalEmptyState } from '@/domain/marketReview';
 import { isAwaitingDecision, isSubmitted } from '@/domain/proposal';
-import type { MarketReviewCandidate } from '@/domain/studio';
+import type { MacroRelease, MarketReviewCandidate } from '@/domain/studio';
 import { formatRelativeTime, formatUsd } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import {
+  useCpiReleases,
+  useLatestCpi,
   useOpenPositions,
   useLatestMarketReview,
   useMarketAnalysisRequest,
@@ -48,6 +50,8 @@ export default function StudioScreen() {
   const equityHistory = useAppStore((state) => state.equityHistory);
 
   const portfolio = usePortfolioSummary();
+  const latestCpi = useLatestCpi();
+  const cpiReleases = useCpiReleases();
   const positions = useOpenPositions();
   const syncBroker = useSyncBrokerConnection();
   const proposals = useTradeProposals();
@@ -166,11 +170,13 @@ export default function StudioScreen() {
         positions.refetch(),
         proposals.refetch(),
         marketReview.refetch(),
+        latestCpi.refetch(),
+        cpiReleases.refetch(),
       ]);
     } finally {
       setRefreshing(false);
     }
-  }, [marketReview, portfolio, positions, proposals, syncPortfolio]);
+  }, [cpiReleases, latestCpi, marketReview, portfolio, positions, proposals, syncPortfolio]);
 
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((event) => {
@@ -258,6 +264,37 @@ export default function StudioScreen() {
         </Reveal>
 
         <Reveal index={2}>
+          <Section
+            caption="Official U.S. Bureau of Labor Statistics data"
+            title="Macro calendar"
+          >
+            {latestCpi.isError && cpiReleases.isError ? (
+              <ErrorState
+                onRetry={() => void Promise.all([latestCpi.refetch(), cpiReleases.refetch()])}
+                retrying={latestCpi.isRefetching || cpiReleases.isRefetching}
+              />
+            ) : latestCpi.isLoading || cpiReleases.isLoading ? (
+              <LoadingBlock lines={2} />
+            ) : (
+              <Card>
+                <CardRow
+                  detail={`Reference month ${latestCpi.data?.reference_period ?? 'unavailable'}`}
+                  emphasis
+                  label="U.S. CPI index"
+                  value={latestCpi.data ? Number(latestCpi.data.value).toLocaleString('en-US') : '—'}
+                />
+                <CardRow
+                  detail="Scheduled release · shown in your device time"
+                  label="Next CPI release"
+                  last
+                  value={nextReleaseLabel(cpiReleases.data, now.getTime())}
+                />
+              </Card>
+            )}
+          </Section>
+        </Reveal>
+
+        <Reveal index={3}>
           {proposals.isLoading ? (
             <View style={styles.proposalsSkeleton}>
               <LoadingBlock lines={2} />
@@ -333,7 +370,7 @@ export default function StudioScreen() {
         </Reveal>
 
         {marketReview.data?.candidates.length ? (
-          <Reveal index={3}>
+          <Reveal index={4}>
             <Section
               action={
                 <HeaderButton
@@ -359,7 +396,7 @@ export default function StudioScreen() {
         ) : null}
 
         {submitted.length ? (
-          <Reveal index={4}>
+          <Reveal index={5}>
             <Section
               action={
                 <HeaderButton
@@ -387,6 +424,20 @@ export default function StudioScreen() {
       </Screen>
     </>
   );
+}
+
+function nextReleaseLabel(releases: MacroRelease[] | undefined, now: number) {
+  const next = releases
+    ?.map((release) => new Date(release.scheduled_at))
+    .filter((date) => Number.isFinite(date.getTime()) && date.getTime() >= now)
+    .sort((left, right) => left.getTime() - right.getTime())[0];
+  if (!next) return 'Not scheduled';
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(next);
 }
 
 const styles = StyleSheet.create({

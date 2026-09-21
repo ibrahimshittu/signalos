@@ -343,6 +343,7 @@ async def test_user_review_submits_exact_proposal_once(tmp_path):
             turnover=Decimal("3"),
             cost_paid=Decimal("0.01"),
             sensitivity_stable=True,
+            execution_replay_validated=True,
             reproducibility_hash="a" * 64,
             passed_gates=True,
             failures=(),

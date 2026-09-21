@@ -164,6 +164,7 @@ cycle; market analysis makes real provider/model requests and can incur costs.
 | Deeper strategy review | Normally due every 300 seconds; initial, manual, and session events can prompt it sooner |
 | Orders and positions | Reconciliation cycle, then a 5-second wait |
 | Push retries and receipts | Processing cycle, then a 900-second wait |
+| CPI observation and calendar | Read on demand from the official BLS API and BLS calendar |
 
 Work takes time, so these are not exact wall-clock schedules. Intervals are configurable in
 `backend/.env.example`. Fetching a saved portfolio/review is not the same as starting a scan.
@@ -237,10 +238,14 @@ explicitly chosen Testnet account with fresh MFA and reviewed terms.
 This is an integrated development application, not a claim of production readiness.
 
 - Executable proposals require an evidence-approved, promoted strategy. An empty registry is a
-  setup block, not evidence of AI rejection. Price-only evaluation does not validate execution
-  replay; do not bypass promotion gates.
-- Live news, CPI releases, ETF flows, and macro calendars are not operationally connected.
-- The drawdown reference is not an implemented automatic drawdown-protection service.
+  setup block, not evidence of AI rejection. Price-only evaluation remains research-only; strategy
+  admission requires a reproducible OHLC execution replay plus shadow evidence and operator review.
+- CPI observations and release dates are connected directly to official BLS sources. Live news and
+  ETF-flow data still require licensed providers; delayed filings and scraped headlines are not
+  presented as live feeds.
+- Drawdown protection uses synchronized active-account equity and pauses new proposals and order
+  submissions at the user's mandate limit. It does not liquidate existing positions, and external
+  deposits or withdrawals can change the equity high-water comparison.
 - Account deletion still needs a backend retention/deletion policy. Clearing local state is not
   account deletion.
 - Push delivery, signing, and order workflows need physical-device/Testnet acceptance.

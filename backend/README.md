@@ -75,9 +75,17 @@ Verify the API at `http://localhost:8001/v1/health` and its development document
 - Submission uses a unique Bybit `orderLinkId`. Transport ambiguity becomes `submission_unknown`;
   SignalOS does not blindly retry and risk a duplicate order.
 - Bybit order acknowledgements are provisional. A dedicated worker polls broker truth every five
-  seconds and stores partial fills, fills, executions, open positions, and closures in Supabase.
+  seconds and stores account equity, partial fills, fills, executions, open positions, and closures
+  in Supabase. Synchronized equity drives a deterministic drawdown gate that pauses new risk at the
+  user's mandate limit; it never liquidates an existing position.
+- CPI observations and release dates come from the official BLS API and calendar. Provider payloads
+  are validated before they reach the API or mobile app.
 - Executable v1 proposals use bounded limit prices. Market-order review is rejected until an exact
   maximum-slippage term can be included in the immutable proposal hash.
+- Strategy admission requires a version-bound OHLC execution replay through the production signal
+  and sizing policies. The replay uses next-bar limit fills, tick and quantity steps, conservative
+  stop handling, fees, spread, slippage, funding, strategy position limits, and reserve floors.
+  Price-only experiments can report research metrics but cannot pass admission.
 - Push notifications contain only a proposal ID and navigation type. They never contain API keys or
   trigger an order.
 - CI uses fakes and recorded responses and never writes to Bybit mainnet.

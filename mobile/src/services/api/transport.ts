@@ -13,9 +13,11 @@ export class SignalOSApiError extends Error {
   }
 }
 
+export type SignalOSFetch = (input: string, init?: RequestInit) => Promise<Response>;
+
 export interface SignalOSHttpOptions {
   baseUrl?: string;
-  fetchImpl?: typeof fetch;
+  fetchImpl?: SignalOSFetch;
   getHeaders?: () => Record<string, string> | Promise<Record<string, string>>;
   timeoutMs?: number;
 }
@@ -38,7 +40,7 @@ function errorCode(body: unknown): string | undefined {
 
 export class SignalOSHttpClient {
   private readonly baseUrl: string;
-  private readonly fetchImpl: typeof fetch;
+  private readonly fetchImpl: SignalOSFetch;
   private readonly getHeaders: () => Record<string, string> | Promise<Record<string, string>>;
   private readonly timeoutMs: number;
 

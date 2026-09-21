@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     market_analysis_candle_limit: int = Field(default=200, ge=50, le=1_000)
     market_data_max_age_seconds: int = Field(default=30, ge=5, le=300)
     instrument_refresh_seconds: int = Field(default=21_600, ge=300, le=86_400)
+    bls_api_base_url: str = "https://api.bls.gov/publicAPI/v2"
+    bls_calendar_url: str = "https://www.bls.gov/schedule/news_release/bls.ics"
+    bls_timeout_seconds: float = Field(default=10, gt=0, le=60)
 
     @field_validator("market_analysis_candle_interval_minutes")
     @classmethod

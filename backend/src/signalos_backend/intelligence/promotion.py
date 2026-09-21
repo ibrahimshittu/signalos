@@ -37,6 +37,8 @@ def assess_promotion(
     failures = list(experiment.failures)
     if not experiment.passed_gates:
         failures.append("experiment_not_passed")
+    if not experiment.execution_replay_validated:
+        failures.append("execution_replay_not_validated")
     if (experiment.strategy_id, experiment.strategy_version) != (strategy.id, strategy.version):
         failures.append("experiment_version_mismatch")
     if shadow.labelled_decisions < requirements.min_labelled_decisions:
