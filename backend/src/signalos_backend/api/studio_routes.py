@@ -21,6 +21,7 @@ from signalos_backend.execution.domain import (
     UpdateProtectionInput,
 )
 from signalos_backend.identity import Principal, require_execution_principal, require_principal
+from signalos_backend.macro.bls import BlsProviderError
 from signalos_backend.market.service import MarketDataError
 from signalos_backend.notifications.domain import RegisterPushDevice
 from signalos_backend.proposals.domain import ProposalConflictError, ProposalFeedback
@@ -42,6 +43,36 @@ async def latest_market_scan(
 ):
     del principal
     return await studio.markets.latest_scan(environment=environment)
+
+
+@router.get("/macro/cpi/latest")
+async def latest_cpi(
+    principal: Annotated[Principal, Depends(require_principal)],
+    studio: Annotated[StudioServices, Depends(get_studio)],
+):
+    del principal
+    try:
+        return await studio.macro.latest_cpi()
+    except BlsProviderError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            content={"code": "bls_data_unavailable", "detail": str(exc)},
+        )
+
+
+@router.get("/macro/cpi/releases")
+async def cpi_releases(
+    principal: Annotated[Principal, Depends(require_principal)],
+    studio: Annotated[StudioServices, Depends(get_studio)],
+):
+    del principal
+    try:
+        return await studio.macro.cpi_releases()
+    except BlsProviderError as exc:
+        return JSONResponse(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            content={"code": "bls_calendar_unavailable", "detail": str(exc)},
+        )
 
 
 @router.post("/market-scans", status_code=status.HTTP_201_CREATED)

@@ -167,6 +167,27 @@ export interface PortfolioRiskState {
   evaluated_at: string;
 }
 
+export interface MacroObservation {
+  provider: 'bls';
+  indicator: 'consumer_price_index';
+  series_id: string;
+  reference_period: string;
+  value: string;
+  unit: 'index_1982_1984_100';
+  source_url: string;
+  retrieved_at: string;
+}
+
+export interface MacroRelease {
+  provider: 'bls';
+  indicator: 'consumer_price_index';
+  external_id: string;
+  title: string;
+  scheduled_at: string;
+  source_url: string;
+  retrieved_at: string;
+}
+
 export interface BrokerPosition {
   id: string;
   connection_id: string;
@@ -448,6 +469,8 @@ export interface InvestmentStudioApi {
   switchBrokerContext(connectionId: string, environment: BrokerEnvironment): Promise<BrokerContext>;
   getPortfolioSummary(): Promise<PortfolioSummary | null>;
   getPortfolioRisk(): Promise<PortfolioRiskState | null>;
+  getLatestCpi(): Promise<MacroObservation>;
+  listCpiReleases(): Promise<MacroRelease[]>;
   listOpenPositions(connectionId?: string): Promise<BrokerPosition[]>;
   getPosition(positionId: string): Promise<BrokerPosition>;
   createExecutionReview(

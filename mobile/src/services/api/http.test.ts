@@ -184,6 +184,33 @@ describe('HttpSignalOSApi', () => {
     );
   });
 
+  it('loads official CPI data and its release calendar', async () => {
+    const observation = { provider: 'bls', series_id: 'CUUR0000SA0', value: '325.252' };
+    const releases = [{ external_id: 'cpi-2026-10', scheduled_at: '2026-10-14T12:30:00Z' }];
+    const fetchImpl = jest
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(response(observation))
+      .mockResolvedValueOnce(response(releases));
+    const api = new HttpSignalOSApi({
+      baseUrl: 'https://api.signalos.test',
+      fetchImpl,
+      getHeaders: () => ({ Authorization: 'Bearer signed-access-token' }),
+    });
+
+    await expect(api.getLatestCpi()).resolves.toEqual(observation);
+    await expect(api.listCpiReleases()).resolves.toEqual(releases);
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      1,
+      'https://api.signalos.test/v1/macro/cpi/latest',
+      expect.any(Object),
+    );
+    expect(fetchImpl).toHaveBeenNthCalledWith(
+      2,
+      'https://api.signalos.test/v1/macro/cpi/releases',
+      expect.any(Object),
+    );
+  });
+
   it('runs a manual market scan for the active environment', async () => {
     const scan = {
       id: 'scan-1',

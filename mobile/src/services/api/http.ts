@@ -172,6 +172,18 @@ export class HttpSignalOSApi implements InvestmentStudioApi {
     }
   }
 
+  getLatestCpi() {
+    return this.client.request<import('@/domain/studio').MacroObservation>(
+      '/v1/macro/cpi/latest',
+    );
+  }
+
+  listCpiReleases() {
+    return this.client.request<import('@/domain/studio').MacroRelease[]>(
+      '/v1/macro/cpi/releases',
+    );
+  }
+
   listOpenPositions(connectionId?: string) {
     return this.client.request<import('@/domain/studio').BrokerPosition[]>(
       `/v1/positions?open_only=true${connectionId ? `&connection_id=${encodeURIComponent(connectionId)}` : ''}`,

@@ -23,6 +23,8 @@ export const studioKeys = {
     [...studioKeys.all, 'market-review', environment] as const,
   marketAnalysisRequest: (id?: string) =>
     [...studioKeys.all, 'market-analysis-request', id] as const,
+  macroCpi: () => [...studioKeys.all, 'macro-cpi'] as const,
+  macroReleases: () => [...studioKeys.all, 'macro-releases'] as const,
   proposals: () => [...studioKeys.all, 'proposals'] as const,
   memory: () => [...studioKeys.all, 'memory'] as const,
 };
@@ -210,6 +212,22 @@ export function useMarketAnalysisRequest(requestId: string | null) {
       const status = query.state.data?.status;
       return status === 'queued' || status === 'running' ? 2_000 : false;
     },
+  });
+}
+
+export function useLatestCpi() {
+  return useQuery({
+    queryKey: studioKeys.macroCpi(),
+    queryFn: () => getStudioApi().getLatestCpi(),
+    staleTime: 60 * 60_000,
+  });
+}
+
+export function useCpiReleases() {
+  return useQuery({
+    queryKey: studioKeys.macroReleases(),
+    queryFn: () => getStudioApi().listCpiReleases(),
+    staleTime: 6 * 60 * 60_000,
   });
 }
 
